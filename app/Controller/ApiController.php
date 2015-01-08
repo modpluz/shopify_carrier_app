@@ -52,12 +52,12 @@ class ApiController extends Controller
         }*/
 
         //$this->redirect('https://'.$_GET['shop'].'/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
+        pr($this->params);
         if ($this->request->is('get')) {
             if (isset($this->params['code']) && isset($this->params['shop'])) {
                 //instantiate model
                 $this->Api->create();
                 //insert record
-                pr($this->params);
                 exit;
                 if ($this->Api->save($this->request->data)) {
 
