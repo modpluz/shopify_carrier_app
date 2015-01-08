@@ -32,8 +32,8 @@ class ApiController extends Controller
             // an error occured when obtaining a request token
         }*/
         if ($this->request->is('get')) {
-            if (isset($_GET['shop'])) {
-                $this->redirect('https://' . $_GET['shop'] . '/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
+            if (isset($this->params['shop'])) {
+                $this->redirect('https://' . $this->params['shop'] . '/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
             }
         }
         die('Please specify a valid shop!');
@@ -53,11 +53,11 @@ class ApiController extends Controller
 
         //$this->redirect('https://'.$_GET['shop'].'/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
         if ($this->request->is('get')) {
-            if (isset($_GET['code']) && isset($_GET['shop'])) {
+            if (isset($this->params['code']) && isset($this->params['shop'])) {
                 //instantiate model
                 $this->Api->create();
                 //insert record
-                pr($this->request->data);
+                pr($this->params);
                 exit;
                 if ($this->Api->save($this->request->data)) {
 
