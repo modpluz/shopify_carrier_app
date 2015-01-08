@@ -28,8 +28,11 @@ class ApiController extends Controller {
         } else {
             // an error occured when obtaining a request token
         }*/
-
-        die('installed');
+        if(isset($_GET['shop'])) {
+            $this->redirect('https://' . $_GET['shop'] . '/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
+        } else {
+            die('Please specify a valid shop!');
+        }
     }
 
     public function install() {
@@ -43,7 +46,14 @@ class ApiController extends Controller {
             // an error occured when obtaining a request token
         }*/
 
-        $this->redirect('https://'.$_GET['shop'].'/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
+        //$this->redirect('https://'.$_GET['shop'].'/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
+
+        if(isset($_GET['code']) && isset($_GET['shop'])){
+            die('installed');
+        } else {
+            die('Installation failed!');
+        }
+
     }
 
     public function callback() {
