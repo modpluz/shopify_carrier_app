@@ -31,10 +31,8 @@ class ApiController extends Controller
         } else {
             // an error occured when obtaining a request token
         }*/
-        if ($this->request->is('get')) {
-            if (isset($this->params['shop'])) {
-                $this->redirect('https://' . $this->params['shop'] . '/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
-            }
+        if ($this->request->is('get') && isset($this->request->query['shop'])) {
+           $this->redirect('https://' . $this->request->query['shop'] . '/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
         }
         die('Please specify a valid shop!');
     }
@@ -52,15 +50,21 @@ class ApiController extends Controller
         }*/
 
         //$this->redirect('https://'.$_GET['shop'].'/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
-        pr($this->params);
+//        pr($this->params);
         if ($this->request->is('get')) {
-            if (isset($this->params['code']) && isset($this->params['shop'])) {
+            if (isset($this->request->query['code']) && isset($this->request->query['shop'])) {
                 //instantiate model
                 $this->Api->create();
                 //insert record
-                exit;
-                if ($this->Api->save($this->request->data)) {
-
+                if ($this->Api->save(array(
+                    'code' => $this->request->query['code'],
+                    'hmac' => $this->request->query['hmac'],
+                    'signature' => $this->request->query['signature'],
+                    'shop' => $this->request->query['shop'],
+                    'created' => date('Y-m-d H:i:s'),
+                    'modified' => date('Y-m-d H:i:s')
+                ))) {
+                    die('Installation successful');
                 }
                 //$this->redirect('https://' . $_GET['shop'] . '/admin/oauth/authorize?client_id=e11587d0c1de09134a91e4ea4ad13a7f&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
             }
