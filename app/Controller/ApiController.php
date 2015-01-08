@@ -18,7 +18,7 @@ App::uses('Controller', 'Controller');
 class ApiController extends Controller
 {
     public $helpers = array('Session');
-    public $components = array('DebugKit.Toolbar', 'Session');
+    public $components = array(/*'DebugKit.Toolbar',*/ 'Session');
 
     public function index()
     {

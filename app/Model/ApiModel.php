@@ -7,6 +7,7 @@
  */
 
 class ApiModel extends AppModel {
+    public $name = 'auth';
     public $validate = array(
         'shop' => array('rule' => 'notEmpty'),
         'code' => array('rule' => 'notEmpty'),
