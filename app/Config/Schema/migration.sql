@@ -1,14 +1,16 @@
 #DROP TABLE IF EXISTS apis;
 CREATE TABLE IF NOT EXISTS apis (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    shop VARCHAR(220),
+    shop VARCHAR(220) NOT NULL,
     code VARCHAR(220),
     hmac VARCHAR(220),
     signature VARCHAR(220),
-    access_token VARCHAR(220),
+    access_token VARCHAR(220) NOT NULL,
     created DATETIME DEFAULT NULL,
     modified DATETIME DEFAULT NULL
 );
+
+ALTER TABLE `apis` ADD COLUMN `access_token` VARCHAR(220) NOT NULL;
 
 DROP TABLE IF EXISTS postal_codes;
 CREATE TABLE postal_codes (
