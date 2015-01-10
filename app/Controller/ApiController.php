@@ -9,6 +9,7 @@
 
 App::uses('Controller', 'Controller');
 use GuzzleHttp\Client;
+require '../../vendor/autoload.php';
 
 /**
  * API Controller
@@ -38,10 +39,10 @@ class ApiController extends Controller
                 $client = new Client();
                 try {
                     $response = $client->post('https://'.$this->request->query['shop'].'/admin/oauth/access_token', [
-                        'headers' => ['Accept' => 'application/json',
+                        /*'headers' => ['Accept' => 'application/json',
                             'X-Shopify-Access-Token' => '8ecbdabcea92821e42437e5d42d98ea1',
                             'Content-Type' => 'application/json'
-                        ],
+                        ],*/
                         'body'    => [
                             'client_id' => Configure::read('shopify.key'),
                             'client_secret' => Configure::read('shopify.secret'),
@@ -49,31 +50,30 @@ class ApiController extends Controller
                         ]
                     ]);
 
-                    debug($response->json());
-                    exit;
+                    if($response->json()){
+                        $resp = $response->json();
+                        //instantiate model
+                        $this->Api->create();
+                        //insert record
+                        if ($this->Api->save(array(
+                            'code' => $this->request->query['code'],
+                            'hmac' => $this->request->query['hmac'],
+                            'signature' => $this->request->query['signature'],
+                            'shop' => $this->request->query['shop'],
+                            'access_token' => $resp['access_token'],
+                            'created' => date('Y-m-d H:i:s'),
+                            'modified' => date('Y-m-d H:i:s')
+                        ))
+                        ) {
+                            $this->redirect('https://' . $this->request->query['shop'] . '/admin/apps');
+                        }
 
-
+                    }
                 } catch (GuzzleHttp\Exception\BadResponseException $e) {
                     debug($e);
                 }
 
                 exit;
-
-                //instantiate model
-                $this->Api->create();
-                //insert record
-                if ($this->Api->save(array(
-                    'code' => $this->request->query['code'],
-                    'hmac' => $this->request->query['hmac'],
-                    'signature' => $this->request->query['signature'],
-                    'shop' => $this->request->query['shop'],
-                    'created' => date('Y-m-d H:i:s'),
-                    'modified' => date('Y-m-d H:i:s')
-                ))
-                ) {
-//                    die('Installation successful');
-                    $this->redirect('https://' . $this->request->query['shop'] . '/admin/apps');
-                }
             }
         }
         die('Installation failed!');
