@@ -47,39 +47,48 @@ class ApiController extends Controller
                     ]);
 
 
-                    if($response->json()){
-                        $resp = $response->json();
-
+                    if($resp = $response->json()){
                         $save_data = array(
-                            'code' => $this->request->query['code'],
-                            'hmac' => $this->request->query['hmac'],
-                            'signature' => $this->request->query['signature'],
                             'access_token' => $resp['access_token']);
 
-                        //do we already have API record for this shop?
+                        //do we already have API record for this shop? then update, otherwise create record
                         $shop = $this->Api->find('first', array('conditions' => 'shop = \''.$this->request->query['shop'].'\''));
                         if(count($shop)) {
                             $save_data['id'] = $shop['Api']['id'];
                             $save_data['modified'] = date('Y-m-d H:i:s');
                         } else {
-                            //instantiate model
+                            //instantiate create model
                             $this->Api->create();
                             $save_data['shop'] = $this->request->query['shop'];
                             $save_data['created'] = date('Y-m-d H:i:s');
                             $save_data['modified'] = date('Y-m-d H:i:s');
-                        }
 
+                            //We don't have an API record for this shop, let's go ahead and create a Carrier Service for this shop
+                            try {
+                                $response = $client->post('https://uafrica4.myshopify.com/admin/carrier_services.json', [
+                                    'headers' => ['Accept' => 'application/json',
+                                        'X-Shopify-Access-Token' => '79b6e61235a4f79f8cffb8dd75402405',
+                                        'Content-Type' => 'application/json'
+                                    ],
+                                    'body' => '{"carrier_service": {"name": "imerCourier","callback_url": "http://devtest01.uafrica.com/carriers/rates.json","format": "json","service_discovery": true}}']);
+                            } catch (GuzzleHttp\Exception\BadResponseException $e) {
+                                //throw error
+                                die('An error occurred while creating carrier service!');
+                            }
+                        }
 
                         //insert/update record
                         if ($this->Api->save($save_data)){
                             $this->redirect('https://' . $this->request->query['shop'] . '/admin/apps');
                         } else {
-                            return json_encode(array('error' => array('code' => 500, 'msg' =>'An internal error occurred')));
+//                            return json_encode(array('error' => array('code' => 500, 'msg' =>'An internal error occurred')));
+                            die('An internal error occurred!');
                         }
 
                     }
                 } catch (GuzzleHttp\Exception\BadResponseException $e) {
-                    return json_encode(array('error' => array('code' => $e->getCode(), 'msg' =>'Service replied with error: '.$e->getMessage())));
+                    //return json_encode(array('error' => array('code' => $e->getCode(), 'msg' =>'Service replied with error: '.$e->getMessage())));
+                    die('Service replied with error: '.$e->getMessage());
                 }
 
                 exit;
@@ -96,22 +105,22 @@ class ApiController extends Controller
         $faker = Faker\Factory::create();
 
 
-        $this->loadModel('CarrierService');
+        $this->loadModel('ShippingMethod');
         $this->loadModel('PostalCode');
         $this->loadModel('ShippingRate');
-        $this->loadModel('CarrierServicesPostalCode');
+        $this->loadModel('ShippingMethodsPostalCode');
         $this->loadModel('PostalCodesShippingRate');
 
         $db = ConnectionManager::getDataSource('default');
         //TRUNCATE TABLES
-        $db->rawQuery("TRUNCATE carrier_services_postal_codes;");
+        $db->rawQuery("TRUNCATE shipping_methods_postal_codes;");
         $db->rawQuery("TRUNCATE postal_codes_shipping_rates;");
-        $db->rawQuery("TRUNCATE carrier_services;");
+        $db->rawQuery("TRUNCATE shipping_methods;");
         $db->rawQuery("TRUNCATE postal_codes;");
         $db->rawQuery("TRUNCATE shipping_rates;");
 
 
-        $carriers = array('imerGX - Day', 'imerGX - Overnight', 'imerFX - Day', 'imerFX - Overnight');
+        $methods = array('1 Day', '2 Days', 'Overnight', 'Express');
         for ($i = 0; $i <= 20; $i++) {
             $this->PostalCode->create();
             $this->ShippingRate->create();
@@ -139,14 +148,11 @@ class ApiController extends Controller
             }
         }
 
-        foreach ($carriers as $carrier) {
-            $this->CarrierService->create();
-            if ($this->CarrierService->save(
-                array('name' => $carrier,
-                    'callback_url' => 'carriers/rates.json'))
-            ) {
+        foreach ($methods as $method) {
+            $this->ShippingMethod->create();
+            if ($this->ShippingMethod->save(array('name' => $method))) {
 
-                if ($new_carrier = $this->CarrierService->find('list', array('conditions' => array('name' => $carrier), 'fields' => array('id')))) {
+                if ($new_method = $this->ShippingMethod->find('list', array('conditions' => array('name' => $method), 'fields' => array('id')))) {
                     //create random relationships between carrier and post codes
                     for ($i = 0; $i <= 10; $i++) {
                         $code_id = rand(array_keys($postalCodes, min($postalCodes))[0], array_keys($postalCodes, max($postalCodes))[0]);
@@ -154,11 +160,11 @@ class ApiController extends Controller
                             //lets make sure this code has a valid rate in the db
 //                            $postalCodeRate = $db->query("SELECT rate_id FROM postal_codes_shipping_rates WHERE postal_code_id='".$code_id."' LIMIT 1");
                             if ($postalCodeRate = $this->PostalCodesShippingRate->find('first', array('fields' => array('rate_id'), 'conditions' => array('postal_code_id' => $code_id)))) {
-                                $this->CarrierServicesPostalCode->create();
+                                $this->ShippingMethodsPostalCode->create();
                                 /*if($this->CarrierServicesPostalCode->isUnique()){
                                     $this->CarrierServicesPostalCode->save(array('postal_code_id' => $code_id, 'carrier_service_id' => reset($new_carrier)));
                                 }*/
-                                $db->rawQuery("INSERT IGNORE INTO carrier_services_postal_codes(postal_code_id, carrier_service_id) VALUES ('" . (int)$code_id . "', '" . (int)reset($new_carrier) . "')");
+                                $db->rawQuery("INSERT IGNORE INTO shipping_methods_postal_codes(postal_code_id, shipping_method_id) VALUES ('" . (int)$code_id . "', '" . (int)reset($new_method) . "')");
                             } else {
                                 //if not, decrement i
                                 $i--;
@@ -173,8 +179,8 @@ class ApiController extends Controller
 
     public function test_has()
     {
-        $this->loadModel('CarrierService');
-        $this->CarrierService->create();
+        $this->loadModel('ShippingMethod');
+//        $this->ShippingMethod->create();
         /*$this->CarrierService->bindModel(
             array('hasMany' => array(
                 'CarrierServicesPostalCode',
@@ -211,23 +217,23 @@ class ApiController extends Controller
             ));*/
 
         $options['joins'] = array(
-            array('table' => 'carrier_services_postal_codes',
-                'alias' => 'CarrierServicesPostalCode',
+            array('table' => 'shipping_methods_postal_codes',
+                'alias' => 'ShippingMethodsPostalCode',
                 'type' => 'INNER',
                 'conditions' => array(
-                    'CarrierServicesPostalCode.carrier_service_id = CarrierService.id',
+                    'ShippingMethodsPostalCode.shipping_method_id = ShippingMethod.id',
                 )
             ), array('table' => 'postal_codes',
                 'alias' => 'PostalCode',
                 'type' => 'INNER',
                 'conditions' => array(
-                    'PostalCode.id = CarrierServicesPostalCode.postal_code_id',
+                    'PostalCode.id = ShippingMethodsPostalCode.postal_code_id',
                 )
             ), array('table' => 'postal_codes_shipping_rates',
                 'alias' => 'PostalCodesShippingRate',
                 'type' => 'INNER',
                 'conditions' => array(
-                    'PostalCodesShippingRate.postal_code_id = CarrierServicesPostalCode.postal_code_id',
+                    'PostalCodesShippingRate.postal_code_id = ShippingMethodsPostalCode.postal_code_id',
                 )
             ), array('table' => 'shipping_rates',
                 'alias' => 'ShippingRate',
@@ -238,22 +244,20 @@ class ApiController extends Controller
             )
         );
         $options['group'] = array(
-            'CarrierServicesPostalCode.postal_code_id',
-            'CarrierServicesPostalCode.carrier_service_id'
+            'ShippingMethodsPostalCode.postal_code_id',
+            'ShippingMethodsPostalCode.shipping_method_id'
         );
         $options['fields'] = array(
-            'CarrierService.id', 'CarrierService.name',
-            'CarrierService.active_yn', 'CarrierService.callback_url',
-            'ShippingRate.rate');
-        $options['conditions'] = "PostalCode.code = '0083'";
-        $this->CarrierService->recursive = FALSE;
+            'ShippingMethod.id', 'ShippingMethod.name','ShippingRate.rate');
+//        $options['conditions'] = "PostalCode.code = '0083'";
+        $this->ShippingMethod->recursive = FALSE;
 
-        $carrier_services = $this->CarrierService->find('all', $options);
+        $shipping_methods = $this->ShippingMethod->find('all', $options);
         /*foreach($carrier_services as $carrier_service){
             debug($carrier_service->postal_code_id);
             exit;
         }*/
-        pr($carrier_services);
+        pr($shipping_methods);
         exit;
     }
 }

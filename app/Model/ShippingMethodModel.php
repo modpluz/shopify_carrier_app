@@ -1,12 +1,12 @@
 <?php
 
-class CarrierServiceModel extends AppModel {
-    public $name = 'CarrierService';
+class ShippingMethodModel extends AppModel {
+    public $name = 'ShippingMethod';
 
 
-    public $hasMany = array(
-        'CarrierServicePostalCode'
-    );
+    /*public $hasMany = array(
+        'ShippingMethodPostalCode'
+    );*/
 
     /*    public $hasMany = array(
             'CarrierServicesPostalCode'

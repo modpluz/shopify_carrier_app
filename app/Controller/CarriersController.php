@@ -9,6 +9,7 @@
 
 App::uses('Controller', 'Controller');
 use GuzzleHttp\Client;
+
 require '../../vendor/autoload.php';
 
 //use Guzzle\Http\Client;
@@ -25,7 +26,8 @@ class CarriersController extends Controller
     public $components = array(/*'DebugKit.Toolbar',*/
         'Session', 'RequestHandler');
 
-    public function beforeFilter() {
+    public function beforeFilter()
+    {
         /*if ($this->RequestHandler->accepts('json')) {
             // Execute code only if client accepts an HTML (text/html)
             // response
@@ -36,19 +38,20 @@ class CarriersController extends Controller
     {
         $this->redirect('/');
     }
+
     public function rates()
     {
         $this->autoRender = false;
         $this->response->type('json');
 
-        if (isset($this->request->data['rate']) && isset($this->request->data['rate']['destination'])){
-            $carrier_services = $this->_carrierRates($this->request->data['rate']['destination']['postal_code']);
+        if (isset($this->request->data['rate']) && isset($this->request->data['rate']['destination'])) {
+            $method_rates = $this->_shippingMethodRates($this->request->data['rate']['destination']['postal_code']);
 
-            if(count($carrier_services)){
+            if (count($method_rates)) {
                 $rates = array();
-                foreach($carrier_services as $idx=>$rate){
-                    $rates[$idx]['service_name'] = $rate['CarrierService']['name'];
-                    $rates[$idx]['service_code'] = Inflector::slug(strtolower($rate['CarrierService']['name']), '-');
+                foreach ($method_rates as $idx => $rate) {
+                    $rates[$idx]['service_name'] = $rate['ShippingMethod']['name'];
+                    $rates[$idx]['service_code'] = Inflector::slug(strtolower($rate['ShippingMethod']['name']), '-');
                     $rates[$idx]['total_price'] = $rate['ShippingRate']['rate'];
                     $rates[$idx]['currency'] = $this->request->data['rate']['currency'];
                     $rates[$idx]['min_delivery_date'] = date('Y-m-d H:i:s');
@@ -57,108 +60,94 @@ class CarriersController extends Controller
 
                 return json_encode(array('rates' => $rates));
             } else {
-                return json_encode(array('error' => array('code' => 400, 'msg' =>'There are no valid rates found for the supplied address!')));
+                return json_encode(array('error' => array('code' => 400, 'msg' => 'There are no valid rates found for the supplied address!')));
             }
         } else {
-            return  json_encode(array('error' => array('code' => 500, 'msg' =>'Please provide a valid postal code!')));
+            return json_encode(array('error' => array('code' => 500, 'msg' => 'Please provide a valid postal code!')));
         }
     }
 
-    public function create($id = null){
+    /*public function create($id = null)
+    {
         require_once '../../vendor/autoload.php';
 
-        $this->loadModel('CarrierService');
+        $this->loadModel('ShippingMethod');
         $find_what = 'all';
         $options = array('conditions' => 'active_yn = 1');
 
-        if(!is_null($id) && (int) $id > 0){
+        if (!is_null($id) && (int)$id > 0) {
             $find_what = 'first';
-            $options['conditions'] .= ' AND id = \''.$id.'\'';
+            $options['conditions'] .= ' AND id = \'' . $id . '\'';
         }
         $carrier_services = $this->CarrierService->find($find_what, $options);
-        if(count($carrier_services)){
+        if (count($carrier_services)) {
             $carriers = array();
             $count = 0;
-            foreach($carrier_services as $carrier){
+            foreach ($carrier_services as $carrier) {
                 $carrier_name = (isset($carrier['CarrierService'])) ? $carrier['CarrierService']['name'] : $carrier['name'];
                 $callback_url = (isset($carrier['CarrierService'])) ? $carrier['CarrierService']['callback_url'] : $carrier['callback_url'];
 
-                $carriers[$count]['name'] = $carrier_name;
-                $carriers[$count]['callback_url'] = Configure::read('app.url').$callback_url;
-                $carriers[$count]['format'] = 'json';
-                $carriers[$count]['service_discovery'] = true;
+                $carriers[$count]['carrier_service']['name'] = $carrier_name;
+                $carriers[$count]['carrier_service']['callback_url'] = Configure::read('app.url') . $callback_url;
+                $carriers[$count]['carrier_service']['format'] = 'json';
+                $carriers[$count]['carrier_service']['service_discovery'] = true;
 
                 $count++;
             }
+            $json_payload = json_encode($carriers);
+            pr($json_payload);
+            exit;
 
             //send create requests over to Shopify
-            foreach($carriers as $carrier){
+            $rest_resp = array();
+            foreach ($carriers as $carrier) {
                 $json_payload = json_encode(array('carrier_service' => $carrier));
 
                 $client = new Client();
 
                 try {
-//                    $response = $request->send();
-//                    $request = $client->post('https://uafrica4.myshopify.com/admin/carrier_services',
-//                                    array('Accept' => 'application/json',
-//                                            'X-Shopify-Access-Token' => 'sdfdsf',
-//                                            'Content-Type' => 'application/json'), array());
-                    $response = $client->post('https://uafrica4.myshopify.com/admin/carrier_services', [
+                    $response = $client->post('https://uafrica4.myshopify.com/admin/carrier_services.json', [
                         'headers' => ['Accept' => 'application/json',
-                                      'X-Shopify-Access-Token' => '8ecbdabcea92821e42437e5d42d98ea1',
-                                      'Content-Type' => 'application/json'
-                                     ],
-                        'body'    => $json_payload]);
-//                    $request->setHeader('Accept', 'application/json');
-//                    $request->setHeader('X-Shopify-Access-Token', '');
-//                    $request->setHeader('Content-Type', 'application/json');
-//                    $request->setBody($json_payload);
-//                    $response = $client->send($request);
-
-
-//                    $response = $request->json();
-
-//                    $resp = $response->getBody();
-
-
-                    debug(('here'));
-                    exit;
-
-
-                    } catch (GuzzleHttp\Exception\BadResponseException $e) {
-                        debug($e);
-                    }
-
-//                debug($client);
-
-                $client = null;
-                exit;
+                            'X-Shopify-Access-Token' => '79b6e61235a4f79f8cffb8dd75402405',
+                            'Content-Type' => 'application/json'
+                        ],
+                        'body' => $json_payload]);
+                    $rest_resp[] = $response->json();
+                    debug($json_payload);
+                } catch (GuzzleHttp\Exception\BadResponseException $e) {
+                    debug($json_payload);
+                    debug($e);
+                }
             }
+
+            debug($rest_resp);
+            exit;
         }
 
 
-    }
+    }*/
 
-    private function _carrierRates($postal_code = null) {
-        $this->loadModel('CarrierService');
+    private function _shippingMethodRates($postal_code = null)
+    {
+        $this->loadModel('ShippingMethod');
         $options['joins'] = array(
-            array('table' => 'carrier_services_postal_codes',
-                'alias' => 'CarrierServicesPostalCode',
+            array('table' => 'shipping_methods_postal_codes',
+                'alias' => 'ShippingMethodsPostalCode',
                 'type' => 'INNER',
                 'conditions' => array(
-                    'CarrierServicesPostalCode.carrier_service_id = CarrierService.id',
+                    'ShippingMethodsPostalCode.shipping_method_id = ShippingMethod.id',
                 )
             ), array('table' => 'postal_codes',
                 'alias' => 'PostalCode',
                 'type' => 'INNER',
                 'conditions' => array(
-                    'PostalCode.id = CarrierServicesPostalCode.postal_code_id',
+                    'PostalCode.id = ShippingMethodsPostalCode.postal_code_id',
                 )
             ), array('table' => 'postal_codes_shipping_rates',
                 'alias' => 'PostalCodesShippingRate',
                 'type' => 'INNER',
                 'conditions' => array(
-                    'PostalCodesShippingRate.postal_code_id = CarrierServicesPostalCode.postal_code_id',
+                    'PostalCodesShippingRate.postal_code_id = ShippingMethodsPostalCode.postal_code_id',
                 )
             ), array('table' => 'shipping_rates',
                 'alias' => 'ShippingRate',
@@ -169,18 +158,16 @@ class CarriersController extends Controller
             )
         );
         $options['group'] = array(
-            'CarrierServicesPostalCode.postal_code_id',
-            'CarrierServicesPostalCode.carrier_service_id'
+            'ShippingMethodsPostalCode.postal_code_id',
+            'ShippingMethodsPostalCode.shipping_method_id'
         );
         $options['fields'] = array(
-            'CarrierService.id', 'CarrierService.name',
-            'CarrierService.active_yn', 'CarrierService.callback_url',
-            'ShippingRate.rate');
-        if(!is_null($postal_code)) $options['conditions'] = "PostalCode.code = '".$postal_code."'";
+            'ShippingMethod.id', 'ShippingMethod.name','ShippingRate.rate');
+        if (!is_null($postal_code)) $options['conditions'] = "PostalCode.code = '" . $postal_code . "'";
 
-        $this->CarrierService->recursive = FALSE;
+        $this->ShippingMethod->recursive = FALSE;
 
-        return $this->CarrierService->find('all', $options);
+        return $this->ShippingMethod->find('all', $options);
     }
 
 }

@@ -11,9 +11,7 @@ class ApiModel extends AppModel {
     public $useTable = 'auth';
     public $validate = array(
         'shop' => array('rule' => 'notEmpty'),
-        'code' => array('rule' => 'notEmpty'),
-        'hmac' => array('rule' => 'notEmpty'),
-        'signature' => array('rule' => 'notEmpty')
+        'access_token' => array('rule' => 'notEmpty'),
     );
 
 
