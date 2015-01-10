@@ -58,10 +58,8 @@ class ApiController extends Controller
 
                         //do we already have API record for this shop?
                         $shop = $this->Api->find('first', array('conditions' => 'shop = \''.$this->request->query['shop'].'\''));
-                        pr($shop);
-                        exit;
                         if(count($shop)) {
-                            $save_data['id'] = $shop['id'];
+                            $save_data['Api']['id'] = $shop['id'];
                             $save_data['modified'] = date('Y-m-d H:i:s');
                         } else {
                             //instantiate model
