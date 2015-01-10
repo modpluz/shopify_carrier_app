@@ -34,8 +34,6 @@ class CarriersController extends Controller
         $this->autoRender = false;
         $this->response->type('json');
 
-        pr($this->request);
-        exit;
 
         if (isset($this->request->data['rate']) && isset($this->request->data['rate']['destination'])) {
             $method_rates = $this->_shippingMethodRates($this->request->data['rate']['destination']['postal_code']);
