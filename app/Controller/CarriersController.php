@@ -44,7 +44,7 @@ class CarriersController extends Controller
         $this->autoRender = false;
         $this->response->type('json');
 
-        $data = $this->request;
+        $data = json_encode($this->request);
         file_put_contents('files/rates_response.json', $data);
 
         if (isset($this->request->data['rate']) && isset($this->request->data['rate']['destination'])) {
@@ -61,7 +61,7 @@ class CarriersController extends Controller
                     $rates[$idx]['max_delivery_date'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d').' +4 days'));
                 }
 
-                file_put_contents('files/rates_response.json', json_encode(array('rates' => $rates)));
+//                file_put_contents('files/rates_response.json', json_encode(array('rates' => $rates)));
                 return json_encode(array('rates' => $rates));
             } else {
                 return json_encode(array('error' => array('code' => 400, 'msg' => 'There are no valid rates found for the supplied address!')));
