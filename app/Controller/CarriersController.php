@@ -43,7 +43,7 @@ class CarriersController extends Controller
                 foreach ($method_rates as $idx => $rate) {
                     $rates[$idx]['service_name'] = $rate['ShippingMethod']['name'];
                     $rates[$idx]['service_code'] = Inflector::slug(strtolower($rate['ShippingMethod']['name']), '-');
-                    $rates[$idx]['total_price'] = $rate['ShippingRate']['rate'];
+                    $rates[$idx]['total_price'] = number_format((float)$rate['ShippingRate']['rate'], 2);
                     $rates[$idx]['currency'] = $this->request->data['rate']['currency'];
                     $rates[$idx]['min_delivery_date'] = date('Y-m-d H:i:s');
                     $rates[$idx]['max_delivery_date'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d').' +'.rand(1, 5).' days'));

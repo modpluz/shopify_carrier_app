@@ -1,2 +1,2 @@
 #shopify_carrier_app
-Shopify Real Time Carrier Rates
+This is an example implementation of the Shopify Service Carrier Rates
