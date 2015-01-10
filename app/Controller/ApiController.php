@@ -65,9 +65,9 @@ class ApiController extends Controller
 
                             //We don't have an API record for this shop, let's go ahead and create a Carrier Service for this shop
                             try {
-                                $response = $client->post('https://uafrica4.myshopify.com/admin/carrier_services.json', [
+                                $response = $client->post('https://'.$this->request->query['shop'].'/admin/carrier_services.json', [
                                     'headers' => ['Accept' => 'application/json',
-                                        'X-Shopify-Access-Token' => '79b6e61235a4f79f8cffb8dd75402405',
+                                        'X-Shopify-Access-Token' => $resp['access_token'],
                                         'Content-Type' => 'application/json'
                                     ],
                                     'body' => '{"carrier_service": {"name": "imerCourier","callback_url": "http://devtest01.uafrica.com/carriers/rates.json","format": "json","service_discovery": true}}']);
