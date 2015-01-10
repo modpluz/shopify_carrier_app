@@ -8,7 +8,7 @@
 
 
 App::uses('Controller', 'Controller');
-//use GuzzleHttp\Client;
+use GuzzleHttp\Client;
 require '../../vendor/autoload.php';
 
 /**
@@ -19,16 +19,12 @@ require '../../vendor/autoload.php';
  */
 class ApiController extends Controller
 {
-    public $helpers = array('Session');
-    public $components = array(/*'DebugKit.Toolbar',*/
-        'Session');
-
     public function index()
     {
         if ($this->request->is('get') && isset($this->request->query['shop'])) {
             $this->redirect('https://' . $this->request->query['shop'] . '/admin/oauth/authorize?client_id='.Configure::read('shopify.key').'&scope=read_shipping,write_shipping&redirect_uri=http://devtest01.uafrica.com');
         }
-        die('Please specify a valid shop!');
+        die('An authorization error occured!');
     }
 
     public function install()
@@ -51,7 +47,7 @@ class ApiController extends Controller
                         $save_data = array(
                             'access_token' => $resp['access_token']);
 
-                        //do we already have API record for this shop? then update, otherwise create record
+                        //do we already have an API record for this shop? then update, otherwise create record
                         $shop = $this->Api->find('first', array('conditions' => 'shop = \''.$this->request->query['shop'].'\''));
                         if(count($shop)) {
                             $save_data['id'] = $shop['Api']['id'];
@@ -138,84 +134,52 @@ class ApiController extends Controller
 //        if(count($postalCodes)){
 //            sort($postalCodes);
 //        }
+        $valid_codes = array();
         for ($i = 0; $i <= 10; $i++) {
             $code_id = rand(array_keys($postalCodes, min($postalCodes))[0], array_keys($postalCodes, max($postalCodes))[0]);
             $rate_id = rand(array_keys($shippingRates, min($shippingRates))[0], array_keys($shippingRates, max($shippingRates))[0]);
             if ($code_id > 0 && $rate_id > 0) {
+                $valid_codes[] = $code_id;
                 $this->PostalCodesShippingRate->create();
                 //$this->PostalCodesShippingRate->save(array('postal_code_id' => $code_id, 'rate_id' => $rate_id));
                 $db->rawQuery("INSERT IGNORE INTO postal_codes_shipping_rates(postal_code_id, rate_id) VALUES ('" . (int)$code_id . "', '" . (int)$rate_id . "')");
             }
         }
 
-        foreach ($methods as $method) {
-            $this->ShippingMethod->create();
-            if ($this->ShippingMethod->save(array('name' => $method))) {
+        if(count($valid_codes)){
+            foreach ($methods as $method) {
+                $this->ShippingMethod->create();
+                if ($this->ShippingMethod->save(array('name' => $method))) {
 
-                if ($new_method = $this->ShippingMethod->find('list', array('conditions' => array('name' => $method), 'fields' => array('id')))) {
-                    //create random relationships between carrier and post codes
-                    for ($i = 0; $i <= 10; $i++) {
-                        $code_id = rand(array_keys($postalCodes, min($postalCodes))[0], array_keys($postalCodes, max($postalCodes))[0]);
-                        if ($code_id) {
-                            //lets make sure this code has a valid rate in the db
+                    if ($new_method = $this->ShippingMethod->find('list', array('conditions' => array('name' => $method), 'fields' => array('id')))) {
+                        //create random relationships between shipping methods and post codes
+                        //now lets create a loop that makes sure that this shipping method has at least 1
+                        // shipping rate per post code with valid rate
+                        foreach ($valid_codes as $code_id) {
+//                        $code_id = rand(array_keys($postalCodes, min($postalCodes))[0], array_keys($postalCodes, max($postalCodes))[0]);
+                            if ($code_id) {
+                                //lets make sure this code has a valid rate in the db
 //                            $postalCodeRate = $db->query("SELECT rate_id FROM postal_codes_shipping_rates WHERE postal_code_id='".$code_id."' LIMIT 1");
-                            if ($postalCodeRate = $this->PostalCodesShippingRate->find('first', array('fields' => array('rate_id'), 'conditions' => array('postal_code_id' => $code_id)))) {
-                                $this->ShippingMethodsPostalCode->create();
-                                /*if($this->CarrierServicesPostalCode->isUnique()){
-                                    $this->CarrierServicesPostalCode->save(array('postal_code_id' => $code_id, 'carrier_service_id' => reset($new_carrier)));
-                                }*/
-                                $db->rawQuery("INSERT IGNORE INTO shipping_methods_postal_codes(postal_code_id, shipping_method_id) VALUES ('" . (int)$code_id . "', '" . (int)reset($new_method) . "')");
-                            } else {
-                                //if not, decrement i
-                                $i--;
+                                if ($postalCodeRate = $this->PostalCodesShippingRate->find('first', array('fields' => array('rate_id'), 'conditions' => array('postal_code_id' => $code_id)))) {
+                                    $this->ShippingMethodsPostalCode->create();
+                                    /*if($this->CarrierServicesPostalCode->isUnique()){
+                                        $this->CarrierServicesPostalCode->save(array('postal_code_id' => $code_id, 'carrier_service_id' => reset($new_carrier)));
+                                    }*/
+                                    $db->rawQuery("INSERT IGNORE INTO shipping_methods_postal_codes(postal_code_id, shipping_method_id) VALUES ('" . (int)$code_id . "', '" . (int)reset($new_method) . "')");
+                                }
                             }
                         }
                     }
                 }
             }
+            die('Database fake data population completed!');
         }
-        die('Database fake data population completed!');
+        die('An error occurred!');
     }
 
     public function test_has()
     {
         $this->loadModel('ShippingMethod');
-//        $this->ShippingMethod->create();
-        /*$this->CarrierService->bindModel(
-            array('hasMany' => array(
-                'CarrierServicesPostalCode',
-
-                'hasAndBelongsToMany' => array(
-                    'PostalCode' => array(
-                        'className' => 'PostalCode',
-                        'foreignKey' => 'id',
-                        'joinTable' => 'carrier_services_postal_codes',
-                        'foreignKey' => 'carrier_service_id',
-                        'unique' => true,
-                        'with' => 'CarrierServicesPostalCode',
-                        'conditions' => "CarrierServicesPostalCode.postal_code_id=PostalCode.id AND PostalCode.code='0083'",
-
-
-
-
-                    ),
-                    'ShippingRates' =>
-                        array(
-                            'className' => 'ShippingRates',
-                            'joinTable' => 'postal_codes_shipping_rates',
-                            'foreignKey' => 'rate_id',
-                            'associationForeignKey' => 'postal_code_id',
-                            'unique' => true,
-                            'conditions' => 'PostalCodesShippingRates.postal_code_id=12',
-                            'fields' => '',
-                            'order' => '',
-                            'limit' => '',
-                            'offset' => '',
-                            //'finderQuery' => "postal_codes.code = '0083'",
-                            'with' => 'PostalCodesShippingRates'
-                        ))
-            ));*/
-
         $options['joins'] = array(
             array('table' => 'shipping_methods_postal_codes',
                 'alias' => 'ShippingMethodsPostalCode',
@@ -253,10 +217,8 @@ class ApiController extends Controller
         $this->ShippingMethod->recursive = FALSE;
 
         $shipping_methods = $this->ShippingMethod->find('all', $options);
-        /*foreach($carrier_services as $carrier_service){
-            debug($carrier_service->postal_code_id);
-            exit;
-        }*/
+
+
         pr($shipping_methods);
         exit;
     }

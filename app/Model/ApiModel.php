@@ -7,8 +7,8 @@
  */
 
 class ApiModel extends AppModel {
-//    public $name = 'auth';
-    public $useTable = 'auth';
+    public $name = 'Api';
+
     public $validate = array(
         'shop' => array('rule' => 'notEmpty'),
         'access_token' => array('rule' => 'notEmpty'),
