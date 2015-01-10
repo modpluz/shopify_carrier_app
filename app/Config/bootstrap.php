@@ -98,6 +98,10 @@ Configure::write('Dispatcher.filters', array(
 	'CacheDispatcher'
 ));
 
+Configure::write('app.url','http://devtest01.uafrica.com/');
+Configure::write('shopify.key','e11587d0c1de09134a91e4ea4ad13a7f');
+Configure::write('shopify.secret','ea173fb21be427f9413f44f59b90bd9e');
+
 /**
  * Configures default file logging options
  */
