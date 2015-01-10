@@ -8,7 +8,7 @@
 
 
 App::uses('Controller', 'Controller');
-use GuzzleHttp\Client;
+//use GuzzleHttp\Client;
 require '../../vendor/autoload.php';
 
 /**

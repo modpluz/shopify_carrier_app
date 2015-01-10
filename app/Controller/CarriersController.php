@@ -46,7 +46,7 @@ class CarriersController extends Controller
 
         if (isset($this->request->data['rate']) && isset($this->request->data['rate']['destination'])) {
             $method_rates = $this->_shippingMethodRates($this->request->data['rate']['destination']['postal_code']);
-            file_put_contents('files/rates_response.json', count($method_rates));
+//            file_put_contents('files/rates_response.json', count($method_rates));
 
             if (count($method_rates)) {
                 $rates = array();
@@ -110,6 +110,8 @@ class CarriersController extends Controller
         if (!is_null($postal_code)) $options['conditions'] = "PostalCode.code = '" . $postal_code . "'";
 
         $this->ShippingMethod->recursive = FALSE;
+
+
 
         return $this->ShippingMethod->find('all', $options);
     }
