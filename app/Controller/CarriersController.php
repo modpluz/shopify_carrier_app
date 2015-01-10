@@ -58,6 +58,7 @@ class CarriersController extends Controller
                     $rates[$idx]['max_delivery_date'] = date('Y-m-d H:i:s');
                 }
 
+                file_put_contents('rates_response.json', json_encode(array('rates' => $rates)));
                 return json_encode(array('rates' => $rates));
             } else {
                 return json_encode(array('error' => array('code' => 400, 'msg' => 'There are no valid rates found for the supplied address!')));
@@ -66,66 +67,6 @@ class CarriersController extends Controller
             return json_encode(array('error' => array('code' => 500, 'msg' => 'Please provide a valid postal code!')));
         }
     }
-
-    /*public function create($id = null)
-    {
-        require_once '../../vendor/autoload.php';
-
-        $this->loadModel('ShippingMethod');
-        $find_what = 'all';
-        $options = array('conditions' => 'active_yn = 1');
-
-        if (!is_null($id) && (int)$id > 0) {
-            $find_what = 'first';
-            $options['conditions'] .= ' AND id = \'' . $id . '\'';
-        }
-        $carrier_services = $this->CarrierService->find($find_what, $options);
-        if (count($carrier_services)) {
-            $carriers = array();
-            $count = 0;
-            foreach ($carrier_services as $carrier) {
-                $carrier_name = (isset($carrier['CarrierService'])) ? $carrier['CarrierService']['name'] : $carrier['name'];
-                $callback_url = (isset($carrier['CarrierService'])) ? $carrier['CarrierService']['callback_url'] : $carrier['callback_url'];
-
-                $carriers[$count]['carrier_service']['name'] = $carrier_name;
-                $carriers[$count]['carrier_service']['callback_url'] = Configure::read('app.url') . $callback_url;
-                $carriers[$count]['carrier_service']['format'] = 'json';
-                $carriers[$count]['carrier_service']['service_discovery'] = true;
-
-                $count++;
-            }
-            $json_payload = json_encode($carriers);
-            pr($json_payload);
-            exit;
-
-            //send create requests over to Shopify
-            $rest_resp = array();
-            foreach ($carriers as $carrier) {
-                $json_payload = json_encode(array('carrier_service' => $carrier));
-
-                $client = new Client();
-
-                try {
-                    $response = $client->post('https://uafrica4.myshopify.com/admin/carrier_services.json', [
-                        'headers' => ['Accept' => 'application/json',
-                            'X-Shopify-Access-Token' => '79b6e61235a4f79f8cffb8dd75402405',
-                            'Content-Type' => 'application/json'
-                        ],
-                        'body' => $json_payload]);
-                    $rest_resp[] = $response->json();
-                    debug($json_payload);
-                } catch (GuzzleHttp\Exception\BadResponseException $e) {
-                    debug($json_payload);
-                    debug($e);
-                }
-            }
-
-            debug($rest_resp);
-            exit;
-        }
-
-
-    }*/
 
     private function _shippingMethodRates($postal_code = null)
     {
