@@ -116,8 +116,8 @@ class ApiController extends Controller
         $db->rawQuery("TRUNCATE shipping_rates;");
 
 
-        $methods = array('1 Day', '2 Days', 'Overnight', 'Express');
-        for ($i = 0; $i <= 20; $i++) {
+        $methods = array('1 Day', 'Overnight');
+        for ($i = 0; $i <= 10; $i++) {
             $this->PostalCode->create();
             $this->ShippingRate->create();
             //populate post codes

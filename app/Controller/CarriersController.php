@@ -87,11 +87,19 @@ class CarriersController extends Controller
                 'conditions' => array(
                     'ShippingRate.id = PostalCodesShippingRate.rate_id',
                 )
+            ), array('table' => 'shipping_methods_postal_codes',
+                'alias' => 'ShippingMethodsPostalCode1',
+                'type' => 'INNER',
+                'conditions' => array(
+                    'ShippingMethodsPostalCode.postal_code_id = ShippingMethodsPostalCode.postal_code_id',
+                )
             )
         );
         $options['group'] = array(
             'ShippingMethodsPostalCode.postal_code_id',
-            'ShippingMethodsPostalCode.shipping_method_id'
+            'ShippingMethodsPostalCode.shipping_method_id',
+            'PostalCodesShippingRate.postal_code_id',
+            'PostalCodesShippingRate.rate_id'
         );
         $options['fields'] = array(
             'ShippingMethod.id', 'ShippingMethod.name','ShippingRate.rate');
