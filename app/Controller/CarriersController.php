@@ -44,7 +44,7 @@ class CarriersController extends Controller
         $this->autoRender = false;
         $this->response->type('json');
 
-        $data = json_encode($this->request->data['rate']['destination']);
+        $data = json_encode($this->request->data['rate']['destination']['postal_code']);
         file_put_contents('files/rates_response.json', $data);
 
         if (isset($this->request->data['rate']) && isset($this->request->data['rate']['destination'])) {
