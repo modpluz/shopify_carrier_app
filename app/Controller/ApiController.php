@@ -39,10 +39,6 @@ class ApiController extends Controller
                 $client = new Client();
                 try {
                     $response = $client->post('https://'.$this->request->query['shop'].'/admin/oauth/access_token', [
-                        /*'headers' => ['Accept' => 'application/json',
-                            'X-Shopify-Access-Token' => '8ecbdabcea92821e42437e5d42d98ea1',
-                            'Content-Type' => 'application/json'
-                        ],*/
                         'body'    => [
                             'client_id' => Configure::read('shopify.key'),
                             'client_secret' => Configure::read('shopify.secret'),
@@ -50,27 +46,40 @@ class ApiController extends Controller
                         ]
                     ]);
 
+
                     if($response->json()){
                         $resp = $response->json();
-                        //instantiate model
-                        $this->Api->create();
-                        //insert record
-                        if ($this->Api->save(array(
+
+                        $save_data = array(
                             'code' => $this->request->query['code'],
                             'hmac' => $this->request->query['hmac'],
                             'signature' => $this->request->query['signature'],
-                            'shop' => $this->request->query['shop'],
-                            'access_token' => $resp['access_token'],
-                            'created' => date('Y-m-d H:i:s'),
-                            'modified' => date('Y-m-d H:i:s')
-                        ))
-                        ) {
+                            'access_token' => $resp['access_token']);
+
+                        //do we already have API record for this shop?
+                        $shop = $this->Api->find('first', array('conditions' => 'shop = \''.$this->request->query['shop'].'\''));
+                        if(count($shop)) {
+                            $save_data['id'] = $shop['id'];
+                            $save_data['modified'] = date('Y-m-d H:i:s');
+                        } else {
+                            //instantiate model
+                            $this->Api->create();
+                            $save_data['shop'] = $this->request->query['shop'];
+                            $save_data['created'] = date('Y-m-d H:i:s');
+                            $save_data['modified'] = date('Y-m-d H:i:s');
+                        }
+
+
+                        //insert/update record
+                        if ($this->Api->save($save_data)){
                             $this->redirect('https://' . $this->request->query['shop'] . '/admin/apps');
+                        } else {
+                            return json_encode(array('error' => array('code' => 500, 'msg' =>'An internal error occurred')));
                         }
 
                     }
                 } catch (GuzzleHttp\Exception\BadResponseException $e) {
-                    debug($e);
+                    return json_encode(array('error' => array('code' => $e->getCode(), 'msg' =>'Service replied with error: '.$e->getMessage())));
                 }
 
                 exit;
