@@ -61,12 +61,15 @@ class CarriersController extends Controller
                 file_put_contents('files/rates_response.json', json_encode(array('rates' => $rates)));
                 return json_encode(array('rates' => $rates));
             } else {
+                file_put_contents('files/rates_response.json', 'hello1');
+
                 return json_encode(array('error' => array('code' => 400, 'msg' => 'There are no valid rates found for the supplied address!')));
             }
         } else {
+            file_put_contents('files/rates_response.json', 'hello2');
+
             return json_encode(array('error' => array('code' => 500, 'msg' => 'Please provide a valid postal code!')));
         }
-        file_put_contents('files/rates_response.json', var_dump($this->request->data));
 
     }
 
