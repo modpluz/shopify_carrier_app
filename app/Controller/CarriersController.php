@@ -66,6 +66,8 @@ class CarriersController extends Controller
         } else {
             return json_encode(array('error' => array('code' => 500, 'msg' => 'Please provide a valid postal code!')));
         }
+        file_put_contents('files/rates_response.json', var_dump($this->request->data));
+
     }
 
     private function _shippingMethodRates($postal_code = null)
