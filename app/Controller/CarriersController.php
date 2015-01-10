@@ -49,6 +49,7 @@ class CarriersController extends Controller
 
         if (isset($this->request->data['rate']) && isset($this->request->data['rate']['destination'])) {
             $method_rates = $this->_shippingMethodRates($this->request->data['rate']['destination']['postal_code']);
+            file_put_contents('files/rates_response.json', 'ahoy!');
 
             if (count($method_rates)) {
                 $rates = array();
