@@ -55,7 +55,7 @@ class CarriersController extends Controller
                     $rates[$idx]['total_price'] = $rate['ShippingRate']['rate'];
                     $rates[$idx]['currency'] = $this->request->data['rate']['currency'];
                     $rates[$idx]['min_delivery_date'] = date('Y-m-d H:i:s');
-                    $rates[$idx]['max_delivery_date'] = date('Y-m-d H:i:s');
+                    $rates[$idx]['max_delivery_date'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d').' +4 days'));
                 }
 
                 file_put_contents('rates_response.json', json_encode(array('rates' => $rates)));
